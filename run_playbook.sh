@@ -12,11 +12,6 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    -n|--namespace)
-    NAMESPACE="$2"
-    shift # past argument
-    shift # past value
-    ;;
     -r|--repo)
     REPO="$2"
     shift # past argument
@@ -38,16 +33,16 @@ case $key in
 esac
 done
 
-DEVICES=( $(ansible --list-hosts all --limit ${LIMIT}',&'${NAMESPACE//-/_} | awk 'NR>1') )
+DEVICES=( $(ansible --list-hosts all --limit ${LIMIT} | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
-  TUNNEL_PORT="$(kubectl -n ${NAMESPACE} get device $DEVICE -o jsonpath='{.spec.keys.data.tunnel}' | base64 -d)"
+  TUNNEL_PORT="$(kubectl get device $DEVICE -o jsonpath='{.spec.keys.data.tunnel}' | base64 -d)"
   re='^[0-9]+$'
   if ! [[ $TUNNEL_PORT =~ $re ]] ; then
     TUNNEL_PORT="$(( ( RANDOM % 64511 )  + 1024 ))"
     TUNNEL_PORT_B64=$(echo -ne "${TUNNEL_PORT}" | base64)
-    kubectl -n ${NAMESPACE} patch device ${DEVICE} \
+    kubectl patch device ${DEVICE} \
       --type merge \
       -p "{\"spec\":{\"keys\":{\"data\":{\"tunnel\":\"${TUNNEL_PORT_B64}\"}}}}"
   fi
@@ -61,7 +56,7 @@ ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT}',&'${NAMESPACE/
 
 for DEVICE in ${DEVICES} ; do
   echo "Disabling tunnel for ${DEVICE}"
-  kubectl -n ${NAMESPACE} patch device ${DEVICE} \
+  kubectl patch device ${DEVICE} \
     --type merge \
     -p "{\"spec\":{\"keys\":{\"data\":{\"tunnel\":\"TkE=\"}}}}"
 done
