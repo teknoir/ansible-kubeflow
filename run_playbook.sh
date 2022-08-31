@@ -25,7 +25,7 @@ case $key in
     -h|--help|*)
     echo "$0 -r(--repo) <repo url> -p(--playbook) <path to playbook in repo> -l(--limit) <ansible limit string>"
     echo "\nExample:"
-    echo "$0 --repo https://github.com/teknoir/device-patch-base.git --playbook example/patch_device_example.yaml --limit 'hardware=nvidia-jetson-nano-b00,patch_version notin (verified)'"
+    echo "$0 --repo https://github.com/teknoir/device-patch-base.git --playbook example/patch_device_example.yaml --limit 'hardware_raspberry_pi,!patch_version_verified'"
     echo ""
     echo ""
     exit 0
@@ -33,7 +33,7 @@ case $key in
 esac
 done
 
-DEVICES=( $(ansible --list-hosts all --limit "\'${LIMIT}\'" | awk 'NR>1') )
+DEVICES=( $(ansible --list-hosts all --limit ${LIMIT} | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
@@ -51,7 +51,7 @@ done
 sleep 5m
 
 git clone ${REPO} ./playbook_repo
-ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit "\'${LIMIT}\'" || true
+ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
 
 for DEVICE in ${DEVICES} ; do
