@@ -42,7 +42,7 @@ for DEVICE in ${DEVICES} ; do
   if ! [[ $TUNNEL_PORT =~ $re ]] ; then
     TUNNEL_PORT="$(( ( RANDOM % 64511 )  + 1024 ))"
     TUNNEL_PORT_B64=$(echo -ne "${TUNNEL_PORT}" | base64)
-    kubectl patch ${DEVICE} \
+    kubectl patch device ${DEVICE} \
       --type merge \
       -p "{\"spec\":{\"keys\":{\"data\":{\"tunnel\":\"${TUNNEL_PORT_B64}\"}}}}"
   fi
@@ -56,7 +56,7 @@ ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
 for DEVICE in ${DEVICES} ; do
   echo "Disabling tunnel for ${DEVICE}"
-  kubectl patch ${DEVICE} \
+  kubectl patch device ${DEVICE} \
     --type merge \
     -p "{\"spec\":{\"keys\":{\"data\":{\"tunnel\":\"TkE=\"}}}}"
 done

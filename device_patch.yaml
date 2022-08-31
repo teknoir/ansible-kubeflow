@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: patch-device-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T12:41:32.964396',
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T12:59:32.026428',
     pipelines.kubeflow.org/pipeline_spec: '{"description": "A Kubeflow pipeline running
       Ansible playbook from a git repo on a subset of devices", "inputs": [{"name":
       "playbook_repo"}, {"name": "playbook_path"}, {"name": "ansible_limit"}], "name":
