@@ -38,7 +38,7 @@ case $key in
 esac
 done
 
-DEVICES=( $(ansible --list-hosts all --limit ${LIMIT}',&'${NAMESPACE} | awk 'NR>1') )
+DEVICES=( $(ansible --list-hosts all --limit ${LIMIT}',&'${NAMESPACE//-/_} | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
