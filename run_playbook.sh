@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -xeo pipefail
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -33,7 +33,7 @@ case $key in
 esac
 done
 
-DEVICES=( $(ansible --list-hosts all --limit '${LIMIT}' | awk 'NR>1') )
+DEVICES=( $(ansible --list-hosts all --limit "\'${LIMIT}\'" | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
