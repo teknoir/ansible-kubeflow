@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeo pipefail
+set -eo pipefail
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -33,7 +33,7 @@ case $key in
 esac
 done
 
-DEVICES=$(kubectl -l "${LIMIT}" get device -o name)
+DEVICES=( $(ansible --list-hosts all --limit '${LIMIT}' | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
@@ -48,14 +48,10 @@ for DEVICE in ${DEVICES} ; do
   fi
 done
 
-echo "Sleep 5 minutes for reverse tunnels to establish"
 sleep 5m
 
-echo "Clone playbook repo: ${REPO}"
 git clone ${REPO} ./playbook_repo
-
-echo "Run playbook playbook_repo/${PLAYBOOK}"
-ansible-playbook -v playbook_repo/${PLAYBOOK} --limit "${LIMIT}" || true
+ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit "\'${LIMIT}\'" || true
 
 
 for DEVICE in ${DEVICES} ; do

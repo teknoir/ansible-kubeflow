@@ -3,7 +3,6 @@
   hosts: all
 
   tasks:
-  tasks:
     - name: Ensure tmp ansible dir
       ansible.builtin.file:
         path: /tmp/ansible
