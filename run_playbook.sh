@@ -37,7 +37,7 @@ DEVICES=( $(ansible --list-hosts all --limit ${LIMIT} | awk 'NR>1') )
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
-  TUNNEL_PORT="$(kubectl get $DEVICE -o jsonpath='{.spec.keys.data.tunnel}' | base64 -d)"
+  TUNNEL_PORT="$(kubectl get device $DEVICE -o jsonpath='{.spec.keys.data.tunnel}' | base64 -d)"
   re='^[0-9]+$'
   if ! [[ $TUNNEL_PORT =~ $re ]] ; then
     TUNNEL_PORT="$(( ( RANDOM % 64511 )  + 1024 ))"
