@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: patch-device-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T11:08:27.326210',
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T11:20:06.536296',
     pipelines.kubeflow.org/pipeline_spec: '{"description": "A Kubeflow pipeline running
       Ansible playbook from a git repo on a subset of devices", "inputs": [{"name":
       "playbook_repo"}, {"name": "playbook_path"}, {"name": "ansible_limit"}], "name":
@@ -11,33 +11,6 @@ metadata:
 spec:
   entrypoint: patch-device
   templates:
-  - name: create-build-workspace-device-patch-900b75
-    resource:
-      action: create
-      manifest: |
-        apiVersion: v1
-        kind: PersistentVolumeClaim
-        metadata:
-          name: '{{workflow.name}}-device-patch-900b75'
-        spec:
-          accessModes:
-          - ReadWriteOnce
-          resources:
-            requests:
-              storage: 500Mi
-    outputs:
-      parameters:
-      - name: create-build-workspace-device-patch-900b75-manifest
-        valueFrom: {jsonPath: '{}'}
-      - name: create-build-workspace-device-patch-900b75-name
-        valueFrom: {jsonPath: '{.metadata.name}'}
-      - name: create-build-workspace-device-patch-900b75-size
-        valueFrom: {jsonPath: '{.status.capacity.storage}'}
-    metadata:
-      labels:
-        pipelines.kubeflow.org/kfp_sdk_version: 1.8.12
-        pipelines.kubeflow.org/pipeline-sdk-type: kfp
-        pipelines.kubeflow.org/enable_caching: "false"
   - name: patch-device
     inputs:
       parameters:
@@ -46,14 +19,11 @@ spec:
       - {name: playbook_repo}
     dag:
       tasks:
-      - {name: create-build-workspace-device-patch-900b75, template: create-build-workspace-device-patch-900b75}
       - name: run-ansible-playbook
         template: run-ansible-playbook
-        dependencies: [create-build-workspace-device-patch-900b75]
         arguments:
           parameters:
           - {name: ansible_limit, value: '{{inputs.parameters.ansible_limit}}'}
-          - {name: create-build-workspace-device-patch-900b75-name, value: '{{tasks.create-build-workspace-device-patch-900b75.outputs.parameters.create-build-workspace-device-patch-900b75-name}}'}
           - {name: playbook_path, value: '{{inputs.parameters.playbook_path}}'}
           - {name: playbook_repo, value: '{{inputs.parameters.playbook_repo}}'}
   - name: run-ansible-playbook
@@ -62,13 +32,11 @@ spec:
       - |2
 
         set -eo pipefail
-        cd /workspace
         export CLUSTER=$(if [ "${PROJECT_ID}" == "teknoir" ]; then echo "teknoir-cluster"; else echo "teknoir-dev-cluster"; fi)
         echo "Get credentials to ${CLUSTER} GKE cluster"
         gcloud container clusters get-credentials ${CLUSTER} --zone us-central1-c --project ${PROJECT_ID}
-        rm -f ./device-patch-base || true
-        git clone https://github.com/teknoir/device-patch-base.git ./device-patch-base
-        cd device-patch-base
+        git clone https://github.com/teknoir/device-patch-base.git ./workdir
+        cd workdir
         ls
         chmod +x run_playbook.sh
         echo "./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "${LIMIT}""
@@ -81,12 +49,9 @@ spec:
       - {name: PLAYBOOK, value: '{{inputs.parameters.playbook_path}}'}
       - {name: LIMIT, value: '{{inputs.parameters.ansible_limit}}'}
       image: gcr.io/teknoir/edgebuild
-      volumeMounts:
-      - {mountPath: /workspace, name: create-build-workspace-device-patch-900b75}
     inputs:
       parameters:
       - {name: ansible_limit}
-      - {name: create-build-workspace-device-patch-900b75-name}
       - {name: playbook_path}
       - {name: playbook_repo}
     metadata:
@@ -95,9 +60,6 @@ spec:
         pipelines.kubeflow.org/pipeline-sdk-type: kfp
         pipelines.kubeflow.org/enable_caching: "true"
       annotations: {pipelines.kubeflow.org/max_cache_staleness: P0D}
-    volumes:
-    - name: create-build-workspace-device-patch-900b75
-      persistentVolumeClaim: {claimName: '{{inputs.parameters.create-build-workspace-device-patch-900b75-name}}'}
   arguments:
     parameters:
     - {name: playbook_repo}

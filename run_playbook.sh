@@ -33,7 +33,7 @@ case $key in
 esac
 done
 
-DEVICES=$(kubectl -l ${LIMIT} get device -o name)
+DEVICES=$(kubectl -l "${LIMIT}" get device -o name)
 
 for DEVICE in ${DEVICES} ; do
   echo "Enabling tunnel for: ${DEVICE}"
@@ -55,7 +55,7 @@ echo "Clone playbook repo: ${REPO}"
 git clone ${REPO} ./playbook_repo
 
 echo "Run playbook playbook_repo/${PLAYBOOK}"
-ansible-playbook -v playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
+ansible-playbook -v playbook_repo/${PLAYBOOK} --limit "${LIMIT}" || true
 
 
 for DEVICE in ${DEVICES} ; do
