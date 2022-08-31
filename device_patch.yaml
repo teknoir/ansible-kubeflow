@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: patch-device-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T11:20:06.536296',
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T12:22:05.771018',
     pipelines.kubeflow.org/pipeline_spec: '{"description": "A Kubeflow pipeline running
       Ansible playbook from a git repo on a subset of devices", "inputs": [{"name":
       "playbook_repo"}, {"name": "playbook_path"}, {"name": "ansible_limit"}], "name":
@@ -40,7 +40,7 @@ spec:
         ls
         chmod +x run_playbook.sh
         echo "./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "${LIMIT}""
-        ./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "${LIMIT}"
+        ./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "'${LIMIT}'"
       command: [bash, -c]
       env:
       - {name: NAMESPACE, value: teknoir-ai}
