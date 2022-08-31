@@ -34,25 +34,34 @@ esac
 done
 
 DEVICES=( $(ansible --list-hosts all --limit ${LIMIT} | awk 'NR>1') )
+TUNNELS_CREATED=false
 
 for DEVICE in ${DEVICES} ; do
-  echo "Enabling tunnel for: ${DEVICE}"
   TUNNEL_PORT="$(kubectl get device $DEVICE -o jsonpath='{.spec.keys.data.tunnel}' | base64 -d)"
-  re='^[0-9]+$'
-  if ! [[ $TUNNEL_PORT =~ $re ]] ; then
+  RE='^[0-9]+$'
+  if ! [[ $TUNNEL_PORT =~ $RE ]] ; then
+    echo "Enabling reverse tunnel for: ${DEVICE}"
     TUNNEL_PORT="$(( ( RANDOM % 64511 )  + 1024 ))"
     TUNNEL_PORT_B64=$(echo -ne "${TUNNEL_PORT}" | base64)
     kubectl patch device ${DEVICE} \
       --type merge \
       -p "{\"spec\":{\"keys\":{\"data\":{\"tunnel\":\"${TUNNEL_PORT_B64}\"}}}}"
+    TUNNELS_CREATED=true
+  else
+    echo "Reverse tunnel already enabled for: ${DEVICE}"
   fi
 done
 
-sleep 5m
+if [[ $TUNNELS_CREATED = true ]] ; then
+    echo "Wait 5 minutes for reverse tunnels to establish"
+    sleep 5m
+fi
 
+echo "Clone git repo: ${REPO}"
 git clone ${REPO} ./playbook_repo
-ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
+echo "Run playbook: ${PLAYBOOK}"
+ansible-playbook -vvv ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
 for DEVICE in ${DEVICES} ; do
   echo "Disabling tunnel for ${DEVICE}"

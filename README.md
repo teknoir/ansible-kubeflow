@@ -1,5 +1,5 @@
 # device-patch-base
-A Kubeflow pipeline that run an Ansible playbook to patch devices
+A Kubeflow pipeline that run an Ansible playbook on a subset of devices
 
 ## Pipeline input
 
