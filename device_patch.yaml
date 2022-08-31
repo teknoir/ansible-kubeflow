@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: patch-device-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T09:47:09.218365',
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "A Kubeflow pipeline running
+      Ansible playbook from a git repo on a subset of devices", "inputs": [{"name":
+      "playbook_repo"}, {"name": "playbook_path"}, {"name": "ansible_limit"}], "name":
+      "Patch device"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12}
+spec:
+  entrypoint: patch-device
+  templates:
+  - name: clone-workspace
+    container:
+      args:
+      - |2
+
+        set -eo pipefail
+        git clone https://github.com/teknoir/device-patch-base.git /workspace
+        cd /workspace
+        ls
+        ./run_playbook.sh --repo {{inputs.parameters.playbook_repo}} --playbook {{inputs.parameters.playbook_path}} --limit {{inputs.parameters.ansible_limit}}
+      command: [bash, -c]
+      image: gcr.io/teknoir/edgebuild
+      volumeMounts:
+      - {mountPath: /workspace, name: create-build-workspace}
+    inputs:
+      parameters:
+      - {name: ansible_limit}
+      - {name: create-build-workspace-name}
+      - {name: playbook_path}
+      - {name: playbook_repo}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.12
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/max_cache_staleness: P0D}
+    volumes:
+    - name: create-build-workspace
+      persistentVolumeClaim: {claimName: '{{inputs.parameters.create-build-workspace-name}}'}
+  - name: create-build-workspace
+    resource:
+      action: create
+      manifest: |
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: '{{workflow.name}}-device-patch-419322'
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+    outputs:
+      parameters:
+      - name: create-build-workspace-manifest
+        valueFrom: {jsonPath: '{}'}
+      - name: create-build-workspace-name
+        valueFrom: {jsonPath: '{.metadata.name}'}
+      - name: create-build-workspace-size
+        valueFrom: {jsonPath: '{.status.capacity.storage}'}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.12
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "false"
+  - name: patch-device
+    inputs:
+      parameters:
+      - {name: ansible_limit}
+      - {name: playbook_path}
+      - {name: playbook_repo}
+    dag:
+      tasks:
+      - name: clone-workspace
+        template: clone-workspace
+        dependencies: [create-build-workspace]
+        arguments:
+          parameters:
+          - {name: ansible_limit, value: '{{inputs.parameters.ansible_limit}}'}
+          - {name: create-build-workspace-name, value: '{{tasks.create-build-workspace.outputs.parameters.create-build-workspace-name}}'}
+          - {name: playbook_path, value: '{{inputs.parameters.playbook_path}}'}
+          - {name: playbook_repo, value: '{{inputs.parameters.playbook_repo}}'}
+      - {name: create-build-workspace, template: create-build-workspace}
+  arguments:
+    parameters:
+    - {name: playbook_repo}
+    - {name: playbook_path}
+    - {name: ansible_limit}
+  serviceAccountName: pipeline-runner
