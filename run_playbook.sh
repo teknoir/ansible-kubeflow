@@ -56,7 +56,7 @@ done
 sleep 5m
 
 git clone ${REPO} ./playbook_repo
-ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
+ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT}',&'${NAMESPACE//-/_} || true
 
 
 for DEVICE in ${DEVICES} ; do

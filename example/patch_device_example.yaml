@@ -30,4 +30,4 @@
         
     - name: Add label to device resource in k8s to reflect applying patch
       delegate_to: localhost
-      command: kubectl patch device "{{ ansible_teknoir_device }}" --type merge -p "{\"metadata\":{\"labels\":{\"example\":\"enabled\"}}}"
+      command: kubectl patch device "{{ ansible_teknoir_device }}" --type merge -p "{\"metadata\":{\"labels\":{\"patch_example\":\"enabled\"}}}"
