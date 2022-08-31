@@ -1,0 +1,49 @@
+---
+- name: Patch "Subsystems"
+  hosts: all
+
+  tasks:
+  - name: Install required python packages
+    pip:
+      name:
+        - kubernetes
+        - systemd-python
+        - systemd-watchdog
+        - python-statemachine
+        - pyserial
+
+  - name: Store pull secret
+    shell: |
+        ./bin/kubectl get secret artifact-registry-secret -o json | jq --sort-keys \
+            'del(
+              .metadata.annotations."kubectl.kubernetes.io/last-applied-configuration",
+              .metadata.annotations."control-plane.alpha.kubernetes.io/leader",
+              .metadata.uid,
+              .metadata.selfLink,
+              .metadata.resourceVersion,
+              .metadata.creationTimestamp,
+              .metadata.generation,
+              .metadata.namespace,
+              .metadata.managedFields
+          )'
+    register: artifactory_secret
+    delegate_to: localhost
+
+  - name: Create pull secret on device
+    command: echo "{{artifactory_secret}}" | kubectl apply -f -n default -
+
+  - name: Patch default sa with pull secret
+    command: |
+        kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "artifact-registry-secret"}]}'
+
+  - name: Add Patch 004 applied text to motd
+    ansible.builtin.lineinfile:
+      path: /etc/update-motd.d/00-header
+      regexp: '^.*Artifact Registry Access : enabled'
+      line: 'printf " * Artifact Registry Access : enabled\n"'
+      state: present
+      create: yes
+
+  - name: Add label to device resource in k8s to reflect applying patch
+    delegate_to: localhost
+    command: ./bin/kubectl patch device "{{ ansible_teknoir_device }}" --type merge -p "{\"metadata\":{\"labels\":{\"ar_access\":\"enabled\"}}}"
