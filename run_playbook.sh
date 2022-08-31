@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -xeo pipefail
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -54,8 +54,8 @@ sleep 5m
 echo "Clone playbook repo: ${REPO}"
 git clone ${REPO} ./playbook_repo
 
-echo "Run playbook ./playbook_repo/${PLAYBOOK}"
-ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
+echo "Run playbook playbook_repo/${PLAYBOOK}"
+ansible-playbook -v playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
 
 for DEVICE in ${DEVICES} ; do

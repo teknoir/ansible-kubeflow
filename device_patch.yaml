@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: patch-device-
-  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T10:13:03.844672',
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.12, pipelines.kubeflow.org/pipeline_compilation_time: '2022-08-31T11:08:27.326210',
     pipelines.kubeflow.org/pipeline_spec: '{"description": "A Kubeflow pipeline running
       Ansible playbook from a git repo on a subset of devices", "inputs": [{"name":
       "playbook_repo"}, {"name": "playbook_path"}, {"name": "ansible_limit"}], "name":
@@ -11,14 +11,14 @@ metadata:
 spec:
   entrypoint: patch-device
   templates:
-  - name: create-build-workspace
+  - name: create-build-workspace-device-patch-900b75
     resource:
       action: create
       manifest: |
         apiVersion: v1
         kind: PersistentVolumeClaim
         metadata:
-          name: '{{workflow.name}}-device-patch-ec31ea'
+          name: '{{workflow.name}}-device-patch-900b75'
         spec:
           accessModes:
           - ReadWriteOnce
@@ -27,11 +27,11 @@ spec:
               storage: 500Mi
     outputs:
       parameters:
-      - name: create-build-workspace-manifest
+      - name: create-build-workspace-device-patch-900b75-manifest
         valueFrom: {jsonPath: '{}'}
-      - name: create-build-workspace-name
+      - name: create-build-workspace-device-patch-900b75-name
         valueFrom: {jsonPath: '{.metadata.name}'}
-      - name: create-build-workspace-size
+      - name: create-build-workspace-device-patch-900b75-size
         valueFrom: {jsonPath: '{.status.capacity.storage}'}
     metadata:
       labels:
@@ -46,14 +46,14 @@ spec:
       - {name: playbook_repo}
     dag:
       tasks:
-      - {name: create-build-workspace, template: create-build-workspace}
+      - {name: create-build-workspace-device-patch-900b75, template: create-build-workspace-device-patch-900b75}
       - name: run-ansible-playbook
         template: run-ansible-playbook
-        dependencies: [create-build-workspace]
+        dependencies: [create-build-workspace-device-patch-900b75]
         arguments:
           parameters:
           - {name: ansible_limit, value: '{{inputs.parameters.ansible_limit}}'}
-          - {name: create-build-workspace-name, value: '{{tasks.create-build-workspace.outputs.parameters.create-build-workspace-name}}'}
+          - {name: create-build-workspace-device-patch-900b75-name, value: '{{tasks.create-build-workspace-device-patch-900b75.outputs.parameters.create-build-workspace-device-patch-900b75-name}}'}
           - {name: playbook_path, value: '{{inputs.parameters.playbook_path}}'}
           - {name: playbook_repo, value: '{{inputs.parameters.playbook_repo}}'}
   - name: run-ansible-playbook
@@ -66,23 +66,27 @@ spec:
         export CLUSTER=$(if [ "${PROJECT_ID}" == "teknoir" ]; then echo "teknoir-cluster"; else echo "teknoir-dev-cluster"; fi)
         echo "Get credentials to ${CLUSTER} GKE cluster"
         gcloud container clusters get-credentials ${CLUSTER} --zone us-central1-c --project ${PROJECT_ID}
+        rm -f ./device-patch-base || true
         git clone https://github.com/teknoir/device-patch-base.git ./device-patch-base
         cd device-patch-base
         ls
         chmod +x run_playbook.sh
-        echo "./run_playbook.sh --repo {{inputs.parameters.playbook_repo}} --playbook {{inputs.parameters.playbook_path}} --limit {{inputs.parameters.ansible_limit}}"
-        ./run_playbook.sh --repo {{inputs.parameters.playbook_repo}} --playbook {{inputs.parameters.playbook_path}} --limit {{inputs.parameters.ansible_limit}}
+        echo "./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "${LIMIT}""
+        ./run_playbook.sh --repo ${REPO} --playbook ${PLAYBOOK} --limit "${LIMIT}"
       command: [bash, -c]
       env:
       - {name: NAMESPACE, value: teknoir-ai}
       - {name: PROJECT_ID, value: teknoir}
+      - {name: REPO, value: '{{inputs.parameters.playbook_repo}}'}
+      - {name: PLAYBOOK, value: '{{inputs.parameters.playbook_path}}'}
+      - {name: LIMIT, value: '{{inputs.parameters.ansible_limit}}'}
       image: gcr.io/teknoir/edgebuild
       volumeMounts:
-      - {mountPath: /workspace, name: create-build-workspace}
+      - {mountPath: /workspace, name: create-build-workspace-device-patch-900b75}
     inputs:
       parameters:
       - {name: ansible_limit}
-      - {name: create-build-workspace-name}
+      - {name: create-build-workspace-device-patch-900b75-name}
       - {name: playbook_path}
       - {name: playbook_repo}
     metadata:
@@ -92,8 +96,8 @@ spec:
         pipelines.kubeflow.org/enable_caching: "true"
       annotations: {pipelines.kubeflow.org/max_cache_staleness: P0D}
     volumes:
-    - name: create-build-workspace
-      persistentVolumeClaim: {claimName: '{{inputs.parameters.create-build-workspace-name}}'}
+    - name: create-build-workspace-device-patch-900b75
+      persistentVolumeClaim: {claimName: '{{inputs.parameters.create-build-workspace-device-patch-900b75-name}}'}
   arguments:
     parameters:
     - {name: playbook_repo}
