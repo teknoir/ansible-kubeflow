@@ -48,9 +48,13 @@ for DEVICE in ${DEVICES} ; do
   fi
 done
 
+echo "Sleep 5 minutes for reverse tunnels to establish"
 sleep 5m
 
+echo "Clone playbook repo: ${REPO}"
 git clone ${REPO} ./playbook_repo
+
+echo "Run playbook ./playbook_repo/${PLAYBOOK}"
 ansible-playbook -v ./playbook_repo/${PLAYBOOK} --limit ${LIMIT} || true
 
 
