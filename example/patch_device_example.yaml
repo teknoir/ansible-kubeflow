@@ -11,7 +11,7 @@
 
     - name: Copy ansible dir
       rsync:
-        src: .
+        src: "{{ playbook_dir }}/"
         dest: /tmp/ansible/
         recursive: yes
         delete: yes
@@ -27,7 +27,3 @@
       shell: "ls -la"
       args:
         chdir: /tmp/ansible
-        
-    - name: Add label to device resource in k8s to reflect applying patch
-      delegate_to: localhost
-      command: kubectl patch device "{{ ansible_teknoir_device }}" --type merge -p "{\"metadata\":{\"labels\":{\"patch_example\":\"enabled\"}}}"
