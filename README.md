@@ -7,6 +7,7 @@ A Kubeflow pipeline that run an Ansible playbook on a subset of devices
 {
   "playbook_repo": "<git repo with a playbook>",
   "playbook_path": "<path to playbook in repo>",
+  "playbook_localhost_path": "<optional path to playbook in repo for playbook to run on localhost in prepare step>",
   "ansible_limit": "<ansible limit>",
   "add_device_label": "<optional label to add to device after successful play>"
 }
