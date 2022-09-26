@@ -1,0 +1,22 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deleteme-default-editor-patch
+rules:
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - devstudios
+      - devstudios/finalizers
+      - notebooks
+      - notebooks/finalizers
+      - devices
+      - devices/finalizers
+      - poddefaults
+    verbs:
+      - get
+      - list
+      - create
+      - delete
+      - patch
+      - update
